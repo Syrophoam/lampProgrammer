@@ -6,11 +6,134 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		52E7D25F2ED5D254007ED7C0 /* libX11.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52E7D25E2ED5D254007ED7C0 /* libX11.6.dylib */; };
+		52E7D2602ED5D254007ED7C0 /* libX11.6.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 52E7D25E2ED5D254007ED7C0 /* libX11.6.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		52E7D2512ED5D14C007ED7C0 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		52E7D2612ED5D254007ED7C0 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				52E7D2602ED5D254007ED7C0 /* libX11.6.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		522248222EDC554C00967640 /* icosahedron.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = icosahedron.obj; sourceTree = "<group>"; };
+		522248242EDC55BF00967640 /* one.animation */ = {isa = PBXFileReference; lastKnownFileType = text; path = one.animation; sourceTree = "<group>"; };
+		522248252EDD445F00967640 /* two.animation */ = {isa = PBXFileReference; lastKnownFileType = text; path = two.animation; sourceTree = "<group>"; };
+		522248262EDD4C9F00967640 /* three.animation */ = {isa = PBXFileReference; lastKnownFileType = text; path = three.animation; sourceTree = "<group>"; };
+		522248272EDE436800967640 /* four.animation */ = {isa = PBXFileReference; lastKnownFileType = text; path = four.animation; sourceTree = "<group>"; };
+		5222482A2EE25F7400967640 /* info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = info.plist; sourceTree = "<group>"; };
+		5222482B2EE2606800967640 /* run.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = run.sh; sourceTree = "<group>"; };
+		5222482C2EE2615B00967640 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
+		52E7D2492ED5CF0A007ED7C0 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		52E7D2532ED5D14C007ED7C0 /* lampProg */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lampProg; sourceTree = BUILT_PRODUCTS_DIR; };
+		52E7D25E2ED5D254007ED7C0 /* libX11.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libX11.6.dylib; path = ../../../../../opt/X11/lib/libX11.6.dylib; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		52E7D25C2ED5D19D007ED7C0 /* Exceptions for "src" folder in "lampProg" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				lampProgrammer.c,
+				main.c,
+				Math.c,
+				OBJLoader.c,
+				RenderEngine.c,
+				X11.c,
+			);
+			target = 52E7D2522ED5D14C007ED7C0 /* lampProg */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		52E7D24D2ED5D02D007ED7C0 /* src */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				52E7D25C2ED5D19D007ED7C0 /* Exceptions for "src" folder in "lampProg" target */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		52E7D2502ED5D14C007ED7C0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				52E7D25F2ED5D254007ED7C0 /* libX11.6.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
+		522248232EDC554C00967640 /* Media */ = {
+			isa = PBXGroup;
+			children = (
+				522248222EDC554C00967640 /* icosahedron.obj */,
+				522248242EDC55BF00967640 /* one.animation */,
+				522248252EDD445F00967640 /* two.animation */,
+				522248262EDD4C9F00967640 /* three.animation */,
+				522248272EDE436800967640 /* four.animation */,
+			);
+			path = Media;
+			sourceTree = "<group>";
+		};
+		522248282EE25F2800967640 /* app */ = {
+			isa = PBXGroup;
+			children = (
+				5222482C2EE2615B00967640 /* Icon.icns */,
+				5222482A2EE25F7400967640 /* info.plist */,
+				5222482B2EE2606800967640 /* run.sh */,
+			);
+			path = app;
+			sourceTree = "<group>";
+		};
 		52E7D23E2ED5CEF1007ED7C0 = {
 			isa = PBXGroup;
 			children = (
+				52E7D2492ED5CF0A007ED7C0 /* Makefile */,
+				522248282EE25F2800967640 /* app */,
+				522248232EDC554C00967640 /* Media */,
+				52E7D24D2ED5D02D007ED7C0 /* src */,
+				52E7D25D2ED5D254007ED7C0 /* Frameworks */,
+				52E7D2542ED5D14C007ED7C0 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		52E7D2542ED5D14C007ED7C0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				52E7D2532ED5D14C007ED7C0 /* lampProg */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		52E7D25D2ED5D254007ED7C0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				52E7D25E2ED5D254007ED7C0 /* libX11.6.dylib */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -22,7 +145,8 @@
 			buildConfigurationList = 52E7D2462ED5CEF1007ED7C0 /* Build configuration list for PBXLegacyTarget "lampProgrammer" */;
 			buildPhases = (
 			);
-			buildToolPath = /opt/homebrew/bin/cmake;
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = /Users/syro/Desktop/xcode/lampProgrammer;
 			dependencies = (
 			);
 			name = lampProgrammer;
@@ -33,6 +157,29 @@
 		};
 /* End PBXLegacyTarget section */
 
+/* Begin PBXNativeTarget section */
+		52E7D2522ED5D14C007ED7C0 /* lampProg */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 52E7D2582ED5D14C007ED7C0 /* Build configuration list for PBXNativeTarget "lampProg" */;
+			buildPhases = (
+				52E7D24F2ED5D14C007ED7C0 /* Sources */,
+				52E7D2502ED5D14C007ED7C0 /* Frameworks */,
+				52E7D2512ED5D14C007ED7C0 /* CopyFiles */,
+				52E7D2612ED5D254007ED7C0 /* Embed Libraries */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = lampProg;
+			packageProductDependencies = (
+			);
+			productName = lampProg;
+			productReference = 52E7D2532ED5D14C007ED7C0 /* lampProg */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
 /* Begin PBXProject section */
 		52E7D23F2ED5CEF1007ED7C0 /* Project object */ = {
 			isa = PBXProject;
@@ -41,6 +188,9 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					52E7D2432ED5CEF1007ED7C0 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					52E7D2522ED5D14C007ED7C0 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
@@ -55,13 +205,25 @@
 			mainGroup = 52E7D23E2ED5CEF1007ED7C0;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 52E7D2542ED5D14C007ED7C0 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				52E7D2432ED5CEF1007ED7C0 /* lampProgrammer */,
+				52E7D2522ED5D14C007ED7C0 /* lampProg */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		52E7D24F2ED5D14C007ED7C0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		52E7D2442ED5CEF1007ED7C0 /* Debug */ = {
@@ -200,6 +362,30 @@
 			};
 			name = Release;
 		};
+		52E7D2592ED5D14C007ED7C0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /opt/X11/include;
+				LIBRARY_SEARCH_PATHS = /opt/X11/lib;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		52E7D25A2ED5D14C007ED7C0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /opt/X11/include;
+				LIBRARY_SEARCH_PATHS = /opt/X11/lib;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -217,6 +403,15 @@
 			buildConfigurations = (
 				52E7D2472ED5CEF1007ED7C0 /* Debug */,
 				52E7D2482ED5CEF1007ED7C0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		52E7D2582ED5D14C007ED7C0 /* Build configuration list for PBXNativeTarget "lampProg" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				52E7D2592ED5D14C007ED7C0 /* Debug */,
+				52E7D25A2ED5D14C007ED7C0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
