@@ -7,19 +7,48 @@
 
 #include "lampProgrammer.h"
 
-void createLampMapping(void){
+struct LampInfo lampInfo;
+
+struct AnimSim animSimArgs;
+pthread_t animationThread;
+
+struct Animation* animations;
+int numAnimations;
+int animationState;
+
+void initAnimations(void){
+	numAnimations = 0;
+	animationState = NONE;
+	animations = NULL;
+}
+
+int getAnimationState(void){ return animationState; }
+int getNumAnimations(void){ return numAnimations; }
+const struct LampInfo* getLampInfo(void){ return &lampInfo; }
+
+const char* getAnimationName(int animationIndex){
+	if(animationIndex < numAnimations)
+		return animations[animationIndex].name;
 	
-	for (int i = 0; i < 20; i++) {
-		lampMapping.lampIndex[i] = i;
-		lampMapping.brightness[i] = rand() % 15;
+	return NULL;
+}
+  
+void createLampMapping(int numLamps){
+	
+	lampInfo.lampIndex = malloc(sizeof(int) * numLamps);
+	lampInfo.brightness = malloc(sizeof(int) * numLamps);
+	
+	for (int i = 0; i < numLamps; i++) {
+		lampInfo.lampIndex[i] = i; 
+		lampInfo.brightness[i] = 0;
 	}
 	
-	lampMapping.connectedState = 0; // not connected
-	lampMapping.fd = -1;
+	lampInfo.connectedState = 0; // not connected
+	lampInfo.fd = -1;
 }
 
 void connectFaceToLamp(int face, int lamp){
-	lampMapping.lampIndex[face] = lamp;
+	lampInfo.lampIndex[face] = lamp;
 	
 	char* com = malloc(64);
 	sprintf(com, "face %i lamp %i\n", face, lamp);
@@ -30,7 +59,7 @@ void connectFaceToLamp(int face, int lamp){
  
 void setLampBrightness(int lamp, int brightness, int sendToDev){
 	
-	lampMapping.brightness[lamp] = brightness;
+	lampInfo.brightness[lamp] = brightness;
 	
 	if(sendToDev){
 		char* com = malloc(64);
@@ -41,13 +70,12 @@ void setLampBrightness(int lamp, int brightness, int sendToDev){
 }
 
 void sendCommand(const char* com){
-	if(lampMapping.connectedState && lampMapping.command.deviceIsReady){
+	if(lampInfo.connectedState && lampInfo.command.deviceIsReady){
 		
-		memset(lampMapping.command.command, 0x0, 128);
-		memcpy(lampMapping.command.command, com, strlen(com));
-		lampMapping.command.commandLen = strlen(com);
-		
-		write(lampMapping.fd, lampMapping.command.command, strlen(com));
+		memset(lampInfo.command.command, 0x0, 128);
+		memcpy(lampInfo.command.command, com, strlen(com));
+		lampInfo.command.commandLen = strlen(com);
+		write(lampInfo.fd, lampInfo.command.command, strlen(com));
 		usleep((128) * 1000);
 	}
 	
@@ -59,14 +87,14 @@ void processLine(const char* line){
 	printf("\tesp = %s\n", line);
 	
 	if(strcmp(line, "LampProgrammer") == 0){
-		lampMapping.command.deviceIsReady = 1;
+		lampInfo.command.deviceIsReady = 1;
 	}
 	
 	
 	
 }
 	
-struct Animation makeAnimation(const char* path){
+void addAnimation(const char* path){
 	
 	FILE* file = fopen(path, "r");
 	if(!file){
@@ -151,18 +179,32 @@ struct Animation makeAnimation(const char* path){
 	free(tokens);
 	free(tokenBuff);
 	
-	return anim;
+	numAnimations++;
+	animations = realloc(animations, sizeof(struct Animation) * numAnimations);
+	animations[numAnimations - 1] = anim;
+	animationState = NUMLOADED; 
 }
 
-int sendAnimation(const struct Animation* animation){
-
-	if( !(lampMapping.connectedState && lampMapping.command.deviceIsReady) ){
+int sendAnimation(const char* animationName){
+	
+	const struct Animation* animation = NULL;
+	for (int i = 0; i < numAnimations; i++) {
+		if(strcmp(animationName, animations[i].name) == 0)
+			animation = &animations[i];
+	}
+	
+	if(!animation){
+		return 0; 
+	}
+	
+	if( !(lampInfo.connectedState && lampInfo.command.deviceIsReady) ){
 		return 0;
 	}
-	lampMapping.command.deviceIsReady = 0;
+	lampInfo.command.deviceIsReady = 0;
+	animationState = SENDING;
 	
 	char startCom[] = "SENDING_ANIM\n";
-	write(lampMapping.fd, startCom, strlen(startCom));
+	write(lampInfo.fd, startCom, strlen(startCom));
 	usleep((64) * 1000);
 	
 	char* animData = malloc(1024);
@@ -172,7 +214,7 @@ int sendAnimation(const struct Animation* animation){
 			animation->numFrames,
 			animation->numlamps);
 	
-	write(lampMapping.fd, animData, strlen(animData));
+	write(lampInfo.fd, animData, strlen(animData));
 	usleep((256) * 1000);
 	
 	char* frameData = malloc(1024);
@@ -185,7 +227,7 @@ int sendAnimation(const struct Animation* animation){
 			frameDataPos += sprintf(frameData + frameDataPos, "%i ", animation->frames[i][j]);
 		}
 		frameData[frameDataPos - 1] = '\n';
-		write(lampMapping.fd, frameData, strlen(frameData));
+		write(lampInfo.fd, frameData, strlen(frameData));
 		usleep((64) * 1000);
 		
 		frameDataPos = 0;
@@ -193,13 +235,14 @@ int sendAnimation(const struct Animation* animation){
 	}
 	free(frameData);
 	
-	char endCom[] = "ANIM_END\n";
-	write(lampMapping.fd, endCom, strlen(startCom));
+	char *endCom = "ANIM_END\n";
+	write(lampInfo.fd, endCom, strlen(endCom));
 	usleep((64) * 1000);
-	lampMapping.command.deviceIsReady = 1;
+	lampInfo.command.deviceIsReady = 1;
 	
 	free(animData);
 	
+	animationState = NUMLOADED;
 	return 1;
 }
 
@@ -218,22 +261,37 @@ void* animSim(void* arg){
 	return NULL;
 }
 
-void playAnimation(const struct Animation* animation){
+const char* playAnimation(const char* animationName){
+	
+	struct Animation* anim = NULL;
+	for (int i = 0; i < numAnimations; i++) {
+		if(strcmp(animationName, animations[i].name) == 0)
+			anim = &animations[i];
+	}
+	if(!anim)
+		return "no animation with that name";
+		
 	
 	animSimArgs.isPlaying = 0;
 	pthread_join(animationThread, NULL);
 	
-	animSimArgs.animation = animation;
+	animSimArgs.animation = anim;
 	
 	animSimArgs.isPlaying = 1;
 	pthread_create(&animationThread, NULL, &animSim, &animSimArgs);
+	
+	animationState = PLAYING;
+	
+	sendCommand("ANIM_PLAY\n");
+	
+	return "playing animation";
 }
 
 void stopAnimation(void){
-	
 	animSimArgs.isPlaying = 0;
 	pthread_join(animationThread, NULL);
-	
+	sendCommand("ANIM_STOP\n");
+	animationState = NUMLOADED;
 }
 
 void* communication(void* usrArg){
@@ -241,25 +299,25 @@ void* communication(void* usrArg){
 	char* line = malloc(256);
 	int lineLen = 0;
 	
-	while (lampMapping.connectedState) {
+	while (lampInfo.connectedState) {
 		
 		usleep((128) * 1000);
-		lampMapping.resp.responseLen = read(lampMapping.fd, lampMapping.resp.response, 256);
+		lampInfo.resp.responseLen = read(lampInfo.fd, lampInfo.resp.response, 256);
 		
-		for (int i = 0; i < lampMapping.resp.responseLen; i++) {
-			if(lampMapping.resp.response[i] == '\n'){
+		for (int i = 0; i < lampInfo.resp.responseLen; i++) {
+			if(lampInfo.resp.response[i] == '\n'){
 				line[lineLen - 1] = '\0';
 				processLine(line);
 				
-				memset(lampMapping.resp.curLine, 0x0, 256);
-				lampMapping.resp.curLineLen = lineLen;
-				memcpy(lampMapping.resp.curLine, line, lineLen);
+				memset(lampInfo.resp.curLine, 0x0, 256);
+				lampInfo.resp.curLineLen = lineLen;
+				memcpy(lampInfo.resp.curLine, line, lineLen);
 				
 				lineLen = 0;
 				memset(line, 0x0, 256);
 				
 			}else{
-				line[lineLen] = lampMapping.resp.response[i];
+				line[lineLen] = lampInfo.resp.response[i];
 				lineLen++;
 			}
 			
@@ -273,39 +331,39 @@ void* communication(void* usrArg){
 
 char* openDevice(char* path){
 	
-	lampMapping.fd = open(path, O_RDWR | O_NONBLOCK | O_NOCTTY | O_SYNC);
-	if(lampMapping.fd < 0){
-		lampMapping.connectedState = -1; // failed to connect
+	lampInfo.fd = open(path, O_RDWR | O_NONBLOCK | O_NOCTTY | O_SYNC);
+	if(lampInfo.fd < 0){
+		lampInfo.connectedState = -1; // failed to connect
 		return "couldnt open\n";
 	}
-	lampMapping.connectedState = 1;
+	lampInfo.connectedState = 1;
 	
-	set_interface_attribs(lampMapping.fd, 115200, 0);
-	set_blocking(lampMapping.fd, 0);
+	set_interface_attribs(lampInfo.fd, 115200, 0);
+	set_blocking(lampInfo.fd, 0);
 	
-	lampMapping.resp.response = malloc(256);
-	lampMapping.resp.responseLen = 0;
-	lampMapping.resp.curLine = malloc(256);
-	lampMapping.resp.curLineLen = 0;
+	lampInfo.resp.response = malloc(256);
+	lampInfo.resp.responseLen = 0;
+	lampInfo.resp.curLine = malloc(256);
+	lampInfo.resp.curLineLen = 0;
 	
-	lampMapping.command.command = malloc(128);
-	lampMapping.command.commandLen = 0;
-	lampMapping.command.deviceIsReady = 0;
+	lampInfo.command.command = malloc(128);
+	lampInfo.command.commandLen = 0;
+	lampInfo.command.deviceIsReady = 0;
 	
-	pthread_create(&lampMapping.comThread, NULL, &communication, &lampMapping.resp);
+	pthread_create(&lampInfo.comThread, NULL, &communication, &lampInfo.resp);
 	
 	return "device opened successfully";
 }
 
 void closeDevice(void){
 	
-	if(lampMapping.connectedState > 0){
-		lampMapping.connectedState = 0;
-		lampMapping.command.deviceIsReady = 0;
-		pthread_join(lampMapping.comThread, NULL);
+	if(lampInfo.connectedState > 0){
+		lampInfo.connectedState = 0;
+		lampInfo.command.deviceIsReady = 0;
+		pthread_join(lampInfo.comThread, NULL);
 		
-		close(lampMapping.fd);
-		free(lampMapping.resp.response);
+		close(lampInfo.fd);
+		free(lampInfo.resp.response);
 	}
 	
 }

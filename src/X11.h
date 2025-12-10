@@ -40,29 +40,23 @@ struct X{
 	XColor* greyScale;
 	
 	int frame;
-} x;
+};
+
+struct X* getX(void);
 
 struct FrameThreadArgs{
 	
 	int shouldExit;
-	struct Vec3f *points;
-	int* pointIsVisible;
-	const struct Mesh *mesh;
+	const struct Mesh **meshes;
+	int numMeshes;
 	struct X *x;
 	int* inputMode;
 	char* commandBuffer;
 	int cmdBufferLength;
 	char* respBuffer;
 	int respBufferLen;
-	struct LampMapping* lampMapping;
+	const struct LampInfo* lampInfo;
 	
-} *frameThreadArgs;
-
-enum AnimationState{
-	NONE = 0,
-	NUMLOADED = 1,
-	PLAYING = 2,
-	SENDING = 3
 };
 
 void* drawLoop(void* usrArg);
@@ -72,6 +66,6 @@ void quitX(void);
 void setInputModeFlag(int* flag);
 void setCommandBuffer(char* buff, int len);
 void setRespBuffer(char* buff, int len);
-void setLampMapping(struct LampMapping* lampMapping);
+void setLampInfo(const struct LampInfo* lampInfo);
 
 #endif /* X11_h */

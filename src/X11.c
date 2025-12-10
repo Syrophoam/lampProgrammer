@@ -7,7 +7,13 @@
 
 #include "X11.h"
 
-void drawChip(int xPos, int yPos, int frameIndex){
+struct X x;
+struct FrameThreadArgs* frameThreadArgs;
+
+ 
+struct X* getX(void){ return &x; }
+
+void drawChip(int xPos, int yPos, int frameIndex, const struct LampInfo* lampInfo){
 	
 	XTextItem chipInfo;
 	chipInfo.nchars = 1;
@@ -24,8 +30,8 @@ void drawChip(int xPos, int yPos, int frameIndex){
 		XDrawLine(x.display, x.window, x.gc, xPos, yPos + (p * mult) + 2, xPos - 5, yPos + (p * mult) + 2);
 	}
 	
-	if(lampMapping.connectedState){
-		if(lampMapping.command.deviceIsReady){
+	if(lampInfo->connectedState){
+		if(lampInfo->command.deviceIsReady){
 			chipInfo.chars = "O";
 		}else{
 			chipInfo.chars = loadingSymbols[ (frameIndex / 8) % 2];
@@ -44,9 +50,11 @@ void drawChip(int xPos, int yPos, int frameIndex){
 void drawFilm(int xPos, int yPos, int frameIndex){
 	
 	XTextItem animInfo;
+	animInfo.font = None;
 	animInfo.nchars = 1;
 	animInfo.chars = NULL;
 	char* playingSymbols[] = {"[", "|", "]"};
+	char* sendingSymbols[] = {"\\", "/"};
 	
 	XSetForeground(x.display, x.gc, x.white);
 	XFillRectangle(x.display, x.window, x.gc, xPos - 5, yPos, 30, 25);
@@ -59,33 +67,60 @@ void drawFilm(int xPos, int yPos, int frameIndex){
 	}
 	XFillRectangle(x.display, x.window, x.gc, xPos - 4, yPos + 6, 28, 13);
 	
-	if(animationState == 0){
+	XSetForeground(x.display, x.gc, x.white);
+
+	int shouldFree = 0;
+	if(getAnimationState() == NONE){
 		animInfo.chars = "X";
-	}else if(animationState == NUMLOADED){
-		if(numAnimations > 9){
+	}else if(getAnimationState() == NUMLOADED){
+		if(getNumAnimations() > 9){
 			animInfo.chars = malloc(2);
 			animInfo.nchars = 2;
 		}else{
 			animInfo.chars = malloc(1);
 		}
-		sprintf(animInfo.chars, "%i", numAnimations);
-		free(animInfo.chars);
-	}else if(animationState == SENDING){
-		animInfo.chars = playingSymbols[frameIndex % 3];
+		sprintf(animInfo.chars, "%i", getNumAnimations());
+		
+		shouldFree = 1;
+	}else if(getAnimationState() == SENDING){
+		animInfo.chars = sendingSymbols[(frameIndex / 8) % 2];
+	}else if(getAnimationState() == PLAYING){
+		animInfo.chars = playingSymbols[(frameIndex / 8) % 3];
 	}
-	
+
 	XDrawText(x.display, x.window, x.gc,
-			  xPos + 7, yPos + 15,
+			  xPos + 6, yPos + 17,
 			  &animInfo, 1);
+	if(shouldFree)
+		free(animInfo.chars);
 	
+}
+
+void drawMesh(int meshIndex, const struct X* x){
+	
+	struct Vec3f* points = malloc(sizeof(struct Vec3f) * getNumPoints(meshIndex));
+	for (int i = 0; i < getNumPoints(meshIndex); i++) {
+		points[i] = projectPoint(getPoint(meshIndex, i), x->width, x->height, getMesh(meshIndex));
+	}
+	drawProjection(points, getMesh(meshIndex), x, getLampInfo());
+	free(points);
+	
+}
+
+int compMesh(void* thunk, const void* a, const void* b){
+	
+	int A = *(int*)a;
+	int B = *(int*)b;
+	float aZ = ((float*)thunk)[A];
+	float bZ = ((float*)thunk)[B];
+	if(aZ > bZ){ return 1; }
+	if(aZ < bZ){ return -1;}
+	return 0;
 }
 
 void* drawLoop(void* usrArg){
 	
 	struct FrameThreadArgs *args = (struct FrameThreadArgs*)usrArg;
-	
-	args->pointIsVisible = malloc(sizeof(int) * getNumPoints(0));
-	args->points = malloc(sizeof(struct Vec3f) * getNumPoints(0));
 	
 	XTextItem title;
 	title.chars = "Lamp Programmer";
@@ -107,34 +142,44 @@ void* drawLoop(void* usrArg){
 	mapTable.chars = "Face Index        Lamp Index";
 	mapTable.nchars = 28;
 	
-	XTextItem faceIndexList[20];
-	XTextItem lampIndexList[20];
+	XTextItem *faceIndexList = calloc(getNumFaces(0), sizeof(XTextItem));
+	XTextItem *lampIndexList = calloc(getNumFaces(0), sizeof(XTextItem));
 	
-	for (int i = 0; i < 20; i++) {
-		faceIndexList[i].chars = malloc(2);
-		lampIndexList[i].chars = malloc(2); // TODO: free my mans
+	for (int i = 0; i < getNumFaces(0); i++) {
+		faceIndexList[i].chars = malloc(4);
+		lampIndexList[i].chars = malloc(4); // TODO: free my mans
 		
 		sprintf(faceIndexList[i].chars, "%i", i + 1);
 		faceIndexList[i].nchars = ((i+1) < 10) ? 1 : 2;
 		
 		sprintf(lampIndexList[i].chars, "%i", i + 1);
 		lampIndexList[i].nchars = ((i+1) < 10) ? 1 : 2;
-
 	}
 	
 	int frameIndex = 0;
-	
 	while(!args->shouldExit){
 		
-		XLockDisplay(x.display);
-		
 		XClearWindow(x.display, x.window);
-		 
-		for (int i = 0; i < getNumPoints(0); i++) {
-			args->points[i] = projectPoint(getPoint(0,i), x.width, x.height, &args->pointIsVisible[i], args->mesh);
+		
+		int* zSortedMeshIndicies = malloc(sizeof(int) * getNumMeshes());
+		float* meshZ = malloc(sizeof(float) * getNumMeshes());
+		for (int i = 0; i < getNumMeshes(); i++) {
+			zSortedMeshIndicies[i] = i;
+			struct Vec3f org = getMesh(i)->origin;
+			rotateVectorY(getMesh(i)->yRotation, &org);
+			meshZ[i] = org.z;
 		}
-		 
-		drawProjection(args->points, args->pointIsVisible, args->mesh, args->x, args->lampMapping);
+		
+		qsort_r(zSortedMeshIndicies, getNumMeshes(), sizeof(int), meshZ, compMesh);
+		free(meshZ);
+
+		for (int i = 0; i < getNumMeshes(); i++) {
+			drawMesh(zSortedMeshIndicies[i], &x);
+		}
+		
+		free(zSortedMeshIndicies);
+		
+		
 		XSetLineAttributes(x.display, x.gc, 0, LineSolid, CapButt, JoinMiter);
 		
 		XSetForeground(x.display, x.gc, x.white);
@@ -146,7 +191,7 @@ void* drawLoop(void* usrArg){
 				  620, 15,
 				  &mapTable, 1);
 		
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < getNumFaces(0); i++) {
 			XDrawText(x.display, x.window, x.gc,
 					  650, 35 + (i * 20),
 					  &faceIndexList[i], 1);
@@ -155,12 +200,12 @@ void* drawLoop(void* usrArg){
 					  750, 35 + (i * 20),
 					  &lampIndexList[i], 1);
 			
-			if(lampMapping.lampIndex[i] < 0)
+			if(args->lampInfo->lampIndex[i] < 0)
 				continue;
 			
 			XDrawLine(x.display, x.window, x.gc,
 					  670, 30 + (i * 20),
-					  740, 30 + (lampMapping.lampIndex[i] * 20));
+					  740, 30 + (args->lampInfo->lampIndex[i] * 20));
 			
 		}
 		
@@ -179,12 +224,10 @@ void* drawLoop(void* usrArg){
 					  &cmdResp, 1);
 		}
 		
-		drawChip(20, 35, frameIndex);
+		drawChip(20, 35, frameIndex, args->lampInfo);
 		drawFilm(20, 70, frameIndex);
 		
 		XFlush(x.display);
-		
-		XUnlockDisplay(x.display);
 		
 		frameIndex++;
 		nanosleep(&x.tm, NULL);
@@ -209,14 +252,12 @@ void initX(int width, int height, int fps){
 	x.white = XWhitePixel(x.display, x.screen);
 	 
 	x.window = XCreateSimpleWindow(x.display, XRootWindow(x.display, x.screen),
-								   1000, 300,
+								   0, 0,
 								   width, height,
 								   1,
 								   x.white,
 								   x.black);
-	
-	 
-	
+		
 	XStoreName(x.display, x.window, "Lamp Programmer");
 	XSelectInput(x.display, x.window, ExposureMask | KeyPressMask | ButtonPressMask );
 	x.gc = XCreateGC(x.display, x.window, 0, 0);
@@ -238,8 +279,6 @@ void initX(int width, int height, int fps){
 		XAllocColor(x.display, XDefaultColormap(x.display, x.screen), &x.greyScale[i]);
 	}
 	
-//	XStoreColors(x.display, XDefaultColormap(x.display, x.screen), x.greyScale, 16);
-	
 	XMapRaised(x.display, x.window);
 	
 	x.tm.tv_sec = 0;
@@ -250,15 +289,17 @@ void initX(int width, int height, int fps){
 	frameThreadArgs = calloc(1, sizeof(struct FrameThreadArgs));
 	frameThreadArgs->x = &x;
 	
-	
 	XInitThreads();
+	
 	
 	pthread_create(&x.drawThread, NULL, &drawLoop, frameThreadArgs);
 	
 }
 
-void addMeshToScreen(const struct Mesh* mesh){ 
-	frameThreadArgs->mesh = mesh; 
+void addMeshToScreen(const struct Mesh* mesh){
+	frameThreadArgs->meshes = realloc(frameThreadArgs->meshes, sizeof(struct Mesh*) * (frameThreadArgs->numMeshes + 1));
+	frameThreadArgs->meshes[frameThreadArgs->numMeshes] = mesh;
+	frameThreadArgs->numMeshes++;
 }
 void setInputModeFlag(int* flag){
 	frameThreadArgs->inputMode = flag;
@@ -271,11 +312,10 @@ void setRespBuffer(char* buff, int len){
 	frameThreadArgs->respBuffer = buff;
 	frameThreadArgs->respBufferLen = len;
 }
-
-void setLampMapping(struct LampMapping* lampMapping){
-	frameThreadArgs->lampMapping = lampMapping;
+ 
+void setLampInfo(const struct LampInfo* lampInfo){
+	frameThreadArgs->lampInfo = lampInfo; 
 }
-
 
 void quitX(void){
 	
@@ -285,3 +325,5 @@ void quitX(void){
 	
 	
 }
+
+

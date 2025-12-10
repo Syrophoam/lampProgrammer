@@ -41,8 +41,15 @@
 		522248262EDD4C9F00967640 /* three.animation */ = {isa = PBXFileReference; lastKnownFileType = text; path = three.animation; sourceTree = "<group>"; };
 		522248272EDE436800967640 /* four.animation */ = {isa = PBXFileReference; lastKnownFileType = text; path = four.animation; sourceTree = "<group>"; };
 		5222482A2EE25F7400967640 /* info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = info.plist; sourceTree = "<group>"; };
-		5222482B2EE2606800967640 /* run.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = run.sh; sourceTree = "<group>"; };
 		5222482C2EE2615B00967640 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
+		5291F65D2EE7D1BF00C61D8A /* cube.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = cube.obj; sourceTree = "<group>"; };
+		5291F65E2EE7D1BF00C61D8A /* four.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = four.obj; sourceTree = "<group>"; };
+		5291F6602EE7D1BF00C61D8A /* ico2.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = ico2.obj; sourceTree = "<group>"; };
+		5291F6622EE7D1BF00C61D8A /* monk.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = monk.obj; sourceTree = "<group>"; };
+		5291F6632EE7D1BF00C61D8A /* Multi.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = Multi.obj; sourceTree = "<group>"; };
+		5291F6642EE831F600C61D8A /* quadulti.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = quadulti.obj; sourceTree = "<group>"; };
+		52933DFE2EE46BED00CB489A /* five.animation */ = {isa = PBXFileReference; lastKnownFileType = text; path = five.animation; sourceTree = "<group>"; };
+		52933DFF2EE5FC2700CB489A /* two.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = two.obj; sourceTree = "<group>"; };
 		52E7D2492ED5CF0A007ED7C0 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		52E7D2532ED5D14C007ED7C0 /* lampProg */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lampProg; sourceTree = BUILT_PRODUCTS_DIR; };
 		52E7D25E2ED5D254007ED7C0 /* libX11.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libX11.6.dylib; path = ../../../../../opt/X11/lib/libX11.6.dylib; sourceTree = "<group>"; };
@@ -89,10 +96,18 @@
 		522248232EDC554C00967640 /* Media */ = {
 			isa = PBXGroup;
 			children = (
+				5291F6642EE831F600C61D8A /* quadulti.obj */,
+				5291F65D2EE7D1BF00C61D8A /* cube.obj */,
+				5291F65E2EE7D1BF00C61D8A /* four.obj */,
+				5291F6602EE7D1BF00C61D8A /* ico2.obj */,
+				5291F6622EE7D1BF00C61D8A /* monk.obj */,
+				5291F6632EE7D1BF00C61D8A /* Multi.obj */,
+				52933DFF2EE5FC2700CB489A /* two.obj */,
 				522248222EDC554C00967640 /* icosahedron.obj */,
 				522248242EDC55BF00967640 /* one.animation */,
 				522248252EDD445F00967640 /* two.animation */,
 				522248262EDD4C9F00967640 /* three.animation */,
+				52933DFE2EE46BED00CB489A /* five.animation */,
 				522248272EDE436800967640 /* four.animation */,
 			);
 			path = Media;
@@ -103,7 +118,6 @@
 			children = (
 				5222482C2EE2615B00967640 /* Icon.icns */,
 				5222482A2EE25F7400967640 /* info.plist */,
-				5222482B2EE2606800967640 /* run.sh */,
 			);
 			path = app;
 			sourceTree = "<group>";

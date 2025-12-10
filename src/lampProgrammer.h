@@ -24,21 +24,22 @@ struct Response{
 	size_t responseLen;
 };
 
+
 struct Command{
 	char* command;
 	size_t commandLen;
 	int deviceIsReady;
 };
 
-struct LampMapping {
-	int lampIndex[20]; //TODO: make variable for more lamps i make
+struct LampInfo {
+	int *lampIndex;
 	int connectedState;
 	int fd;
-	int brightness[20]; // 0 - 15
+	int *brightness; // 0 - 15
 	struct Response resp;
 	struct Command command;
 	pthread_t comThread;
-} lampMapping;
+};
 
 struct Animation {
 	char* name;
@@ -48,29 +49,37 @@ struct Animation {
 	int numlamps;
 }; // COPIED TO SHIFT REG CODE UPDATE THERE IF UPDATING
 
-struct Animation* animations;
-int numAnimations;
 
-
-int animationState;
-
-pthread_t animationThread;
 struct AnimSim{
 	int isPlaying;
 	const struct Animation* animation;
-} animSimArgs;
+};
 
-void createLampMapping(void);
+enum AnimationState{
+	NONE = 0,
+	NUMLOADED = 1,
+	PLAYING = 2,
+	SENDING = 3
+};
+
+void initAnimations(void);
+
+void createLampMapping(int numLamps);
+
 char* openDevice(char* path);
 void closeDevice(void);
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
 void sendCommand(const char* com);
 
+int getAnimationState(void);
+int getNumAnimations(void);
+const struct LampInfo* getLampInfo(void);
+const char* getAnimationName(int animationIndex);
 
-struct Animation makeAnimation(const char* path);
-int sendAnimation(const struct Animation* animation);
-void playAnimation(const struct Animation* animation);
+void addAnimation(const char* path);
+int sendAnimation(const char* animationName);
+const char* playAnimation(const char* animationName);
 void stopAnimation(void);
 
 void connectFaceToLamp(int face, int lamp);

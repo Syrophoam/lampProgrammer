@@ -7,6 +7,7 @@
 
 #include "RenderEngine.h"
 
+struct Cam cam;
 
 void initEngine(void){
 	
@@ -68,20 +69,13 @@ void zoom(float amount){
 }
 
 
-struct Vec3f projectPoint(const struct Vec3f* point, int windowWidth, int windowHeight, int* pointIsVisible, const struct Mesh* mesh){
+struct Vec3f projectPoint(const struct Vec3f* point, int windowWidth, int windowHeight, const struct Mesh* mesh){
 	struct Vec3f res; // including depth
 	
 	struct Vec3f rotPoint = *point;
 	rotateVectorY(mesh->yRotation, &rotPoint);
 	
 	struct Vec3f vertCam = multiplyPointByMatrix(&rotPoint, &cam.worldToCam);
-	
-	if (-vertCam.z <= cam.near) { // vertCam is the point *before* projection
-		*pointIsVisible = 0;
-	} else {
-		*pointIsVisible = 1;
-	}
-	
 	struct Vec3f projectedVert = multiplyPointByMatrix(&vertCam, &cam.Mproj);
 	
 	projectedVert.x *= cam.zoom;
@@ -109,10 +103,10 @@ int comp(void* c, const void* a, const void* b){
 
 
 
-void drawProjection(const struct Vec3f* points, int* pointIsVisible, const struct Mesh* mesh, const struct X* x, struct LampMapping* lampMapping){
+void drawProjection(const struct Vec3f* points, const struct Mesh* mesh, const struct X* x, const struct LampInfo* lampInfo){
 	
-	float* faceDepths = malloc(sizeof(float) * getNumFaces(0));
-	struct Vec2f* facePositions = malloc(sizeof(struct Vec2f) * getNumFaces(0));
+	float* faceDepths = malloc(sizeof(float) * mesh->numFaces);
+	struct Vec2f* facePositions = malloc(sizeof(struct Vec2f) * mesh->numFaces);
 	XTextItem faceLabels[mesh->numFaces];
 	
 	for (int f = 0; f < mesh->numFaces; f++) {
@@ -120,15 +114,15 @@ void drawProjection(const struct Vec3f* points, int* pointIsVisible, const struc
 		float avgZ = 0;
 		float avgX = 0; float avgY = 0;
 		
-		int numV = mesh->numVertsInFaces[f];
-		for (int v = 0; v < numV; v++) {
+	
+		for (int v = 0; v < 3; v++) {
 			avgZ += points[mesh->vertIndicies[f][v]].z;
 			avgX += points[mesh->vertIndicies[f][v]].x;
 			avgY += points[mesh->vertIndicies[f][v]].y;
 		}
-		avgZ /= (float)numV;
-		avgX /= (float)numV;
-		avgY /= (float)numV;
+		avgZ /= 3.;
+		avgX /= 3.;
+		avgY /= 3.;
 		
 		faceDepths[f] = avgZ;
 		facePositions[f].x = avgX;
@@ -139,25 +133,25 @@ void drawProjection(const struct Vec3f* points, int* pointIsVisible, const struc
 		sprintf(faceLabels[f].chars, "%i", f + 1);
 		faceLabels[f].nchars = ((f + 1) < 10) ? 1 : 2;
 		
-		}
-		
-	int* zSortedFaceIndices = malloc(sizeof(int) * getNumFaces(0));
-	for (int i = 0; i < getNumFaces(0); i++) {
+	}
+	
+	int* zSortedFaceIndices = malloc(sizeof(int) * mesh->numFaces);
+	for (int i = 0; i < mesh->numFaces; i++) {
 		zSortedFaceIndices[i] = i;
 	}
 	
 	qsort_r(zSortedFaceIndices, mesh->numFaces, sizeof(int), faceDepths, comp);
 	
-	free(faceDepths);
+	
 	
 	for (int face = 0; face < mesh->numFaces; face++) {
 		int sortedFace = zSortedFaceIndices[face];
-		
-		int numVerts = mesh->numVertsInFaces[sortedFace];
-		int drawFace = 0;
-		for (int i = 0; i < numVerts; i++) {
-			drawFace += pointIsVisible[mesh->vertIndicies[sortedFace][i]];
+		if(faceDepths[sortedFace] > 1.){
+			continue;
 		}
+		
+		
+		int numVerts = mesh->numVertsInFace[sortedFace];
 		
 		XPoint* faceCorners = malloc(sizeof(XPoint) * numVerts);
 		
@@ -169,61 +163,55 @@ void drawProjection(const struct Vec3f* points, int* pointIsVisible, const struc
 			float p2x = points[mesh->vertIndicies[sortedFace][ (vert + 1) % numVerts]].x;
 			float p2y = points[mesh->vertIndicies[sortedFace][ (vert + 1) % numVerts]].y;
 			
+			XSetForeground(x->display, x->gc, x->white);
 			
-			if(drawFace == numVerts){
-				XSetForeground(x->display, x->gc, x->white);
-				
-				if((sortedFace == 19) && (vert == 2)){
-					XSetLineAttributes(x->display, x->gc, 6, LineOnOffDash, CapButt, JoinMiter);
-				}else{
-					XSetLineAttributes(x->display, x->gc, 2, LineSolid, CapButt, JoinMiter);
-				}
-				XDrawLine(x->display, x->window, x->gc,
-						  p1x, p1y,
-						  p2x, p2y);
+			if((sortedFace == 19) && (vert == 2)){
+				XSetLineAttributes(x->display, x->gc, 6, LineOnOffDash, CapButt, JoinMiter);
+			}else{
+				XSetLineAttributes(x->display, x->gc, 2, LineSolid, CapButt, JoinMiter);
 			}
-			
+			XDrawLine(x->display, x->window, x->gc,
+					  p1x, p1y,
+					  p2x, p2y);
 			
 			faceCorners[vert].x = p1x;
 			faceCorners[vert].y = p1y;
 		}
 		
-		if (drawFace == numVerts) {
-			
-			int brightness = lampMapping->brightness[sortedFace];
-			
-			XSetForeground(x->display, x->gc, x->greyScale[brightness].pixel);
-			
-			XFillPolygon(x->display, x->window, x->gc,
-						 faceCorners,
-						 numVerts,
-						 Convex,
-						 FillSolid);
-		}
+		int brightness = lampInfo->brightness[sortedFace];
+		
+		XSetForeground(x->display, x->gc, x->greyScale[brightness].pixel);
+		
+		XFillPolygon(x->display, x->window, x->gc,
+					 faceCorners,
+					 numVerts,
+					 Convex,
+					 FillSolid);
+		
 		
 		free(faceCorners);
 	}
 	
 	
-	for (int i = 10; i < 20; i++) {
+	for (int i = (mesh->numFaces - (mesh->numFaces / 2)); i < mesh->numFaces; i++) {
 		
 		int faceIndex = zSortedFaceIndices[i];
 		
-		if(lampMapping->brightness[faceIndex] < 8){
+		if(lampInfo->brightness[faceIndex] < 8){
 			XSetForeground(x->display, x->gc, x->white);
 		}else{
 			XSetForeground(x->display, x->gc, x->black);
 		}
 		
-		XDrawText(x->display, x->window, x->gc,
-				  (int)facePositions[faceIndex].x, (int)facePositions[faceIndex].y,
-				  &(faceLabels[faceIndex]), 1);
+//		XDrawText(x->display, x->window, x->gc,
+//				  (int)facePositions[faceIndex].x, (int)facePositions[faceIndex].y,
+//				  &(faceLabels[faceIndex]), 1);
 	}
 	
-	
+	free(faceDepths);
 	free(zSortedFaceIndices);
 	free(facePositions);
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < mesh->numFaces; i++) {
 		free(faceLabels[i].chars);
 	}
 }

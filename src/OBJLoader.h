@@ -20,10 +20,17 @@ struct OBJ {
 	FILE* file;
 	struct Mesh* meshes;
 	int numMeshes;
-} obj;
+};
+
+struct Token{
+	char** tokens;
+	int numTokens;
+};
 
 struct Mesh{
 	char* name;
+	
+	struct Vec3f origin;
 	 
 	struct Vec3f* vertices;
 	struct Vec3f* normals;
@@ -33,7 +40,7 @@ struct Mesh{
 	int numVerticies;
 	int numNormals;
 	int numFaces;
-	int* numVertsInFaces;
+	int* numVertsInFace;
 	
 	float xRotation, yRotation, zRotation;
 	float xTranslation, yTranslation, zTranslation;
@@ -41,14 +48,17 @@ struct Mesh{
 
 int getNumPoints(int meshIndex);
 int getNumFaces(int meshIndex);
+int getNumMeshes(void);
 struct Vec3f* getPoint(int meshIndex, int vertIndex);
 struct Mesh* getMesh(int index);
 void parseVector(const char* line, int offset, struct Vec3f* vec);
 int getNumVertsInFace(const char* line);
-void parseFaceIndexList(const char* line, int numVerticies, int* vertIndicies, int* normIndicies);
+void parseFaceIndexList(const char* line, int numVerticies, int* vertIndicies, int* normIndicies, int currentNumVerts);
+struct Token parseTokens(const char* line, int lineLen, const char* delimiters);
 int loadFile(const char* path);
 void destroyMesh(struct Mesh* mesh);
 void rotateMesh(int meshIndex, float amount);
 
+struct OBJ* getOBJ(void); 
 
 #endif /* OBJLoader_h */

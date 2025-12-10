@@ -1,0 +1,8 @@
+Build
+LampProgrammer.app
+Makefile
+Media
+app
+lampProgrammer.xcodeproj
+src
+temp.txt
