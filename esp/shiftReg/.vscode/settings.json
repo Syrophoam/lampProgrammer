@@ -1,0 +1,7 @@
+{
+    "idf.flashType": "UART",
+    "idf.port": "/dev/tty.usbserial-0001",
+    "files.associations": {
+        "esp_bt_defs.h": "c"
+    }
+}

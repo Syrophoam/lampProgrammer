@@ -54,7 +54,7 @@ struct Mesh* getMesh(int index);
 void parseVector(const char* line, int offset, struct Vec3f* vec);
 int getNumVertsInFace(const char* line);
 void parseFaceIndexList(const char* line, int numVerticies, int* vertIndicies, int* normIndicies, int currentNumVerts);
-struct Token parseTokens(const char* line, int lineLen, const char* delimiters);
+struct Token parseTokens(const char* line, unsigned int lineLen, const char* delimiters);
 int loadFile(const char* path);
 void destroyMesh(struct Mesh* mesh);
 void rotateMesh(int meshIndex, float amount);

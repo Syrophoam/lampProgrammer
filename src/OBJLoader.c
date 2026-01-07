@@ -21,10 +21,7 @@ void rotateMesh(int meshIndex, float amount){
 	obj.meshes[meshIndex].yRotation += amount;
 }
 
-/*
-abc def
- */
-struct Token parseTokens(const char* line, int lineLen, const char* delimiters){
+struct Token parseTokens(const char* line, unsigned int lineLen, const char* delimiters){
 	size_t numDelimiters = strlen(delimiters);
 	
 	int numTokens = 0;

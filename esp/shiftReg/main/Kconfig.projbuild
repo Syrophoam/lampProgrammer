@@ -1,0 +1,16 @@
+menu "shift registor config"
+
+    config GPIO_OUTPUT_0
+        int "CLK"
+        default 13
+
+    config GPIO_OUTPUT_1
+        int "A"
+        default 12
+
+    config GPIO_OUTPUT_2
+        int "built in LED"
+        default 2
+
+
+endmenu

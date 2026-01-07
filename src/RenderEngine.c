@@ -203,9 +203,9 @@ void drawProjection(const struct Vec3f* points, const struct Mesh* mesh, const s
 			XSetForeground(x->display, x->gc, x->black);
 		}
 		
-//		XDrawText(x->display, x->window, x->gc,
-//				  (int)facePositions[faceIndex].x, (int)facePositions[faceIndex].y,
-//				  &(faceLabels[faceIndex]), 1);
+		XDrawText(x->display, x->window, x->gc,
+				  (int)facePositions[faceIndex].x, (int)facePositions[faceIndex].y,
+				  &(faceLabels[faceIndex]), 1);
 	}
 	
 	free(faceDepths);
